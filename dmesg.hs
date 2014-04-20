@@ -4,26 +4,43 @@ import System.Process
 
 main :: IO ()
 main = do
+  bootTime <- getBootTime
+  hout <- dmesg
+  processHandle bootTime hout
+
+
+getBootTime :: IO Float
+getBootTime = do
+  contents <- readFile "/proc/uptime"
+  return $ head $ map readFloat . words $ contents
+
+readFloat :: String -> Float
+readFloat = read
+
+dmesg :: IO Handle
+dmesg = do
     (_, Just hout, _, _) <-
         createProcess (proc "/sbin/dmesg" [])
            { cwd = Just "."
            , std_out = CreatePipe
            }
 
-    processHandle hout
+    return hout
 
-processHandle :: Handle -> IO ()
-processHandle hout = do
+processHandle :: Float -> Handle -> IO ()
+processHandle bootTime hout = do
   end <- hIsEOF hout
   unless end $ do
     line <- hGetLine hout
-    processLine line
-    processHandle hout
+    processLine bootTime line
+    processHandle bootTime hout
 
 
 -- Here we're going to need to print the line as is unless it starts
 -- with a timedelta. If it starts with a timedelta, figure out what
--- time it is by comparing it to the current timestamp (which can be
--- derived) from /proc/uptime.
-processLine :: String -> IO ()
-processLine line = putStrLn line
+-- time it is by adding it to bootTime and treating it like an epoch
+processLine :: Float -> String -> IO ()
+processLine bootTime line = putStrLn line
+
+
+
