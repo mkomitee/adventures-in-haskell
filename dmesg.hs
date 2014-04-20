@@ -43,4 +43,7 @@ processLine :: Float -> String -> IO ()
 processLine bootTime line = putStrLn line
 
 
-
+-- These libraries may prove necessary to compare the timestamps to
+-- the current time and the uptime:
+-- import Data.Time.Clock
+-- import Data.Time.Clock.POSIX
